@@ -17,6 +17,7 @@ type DrawerMode = "DETAILS" | "REPORT" | "CHECKIN";
 
 export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
     const [mode, setMode] = useState<DrawerMode>("DETAILS");
+    const [lookingForGame, setLookingForGame] = useState(false);
     const [loadingMsg, setLoadingMsg] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -71,7 +72,8 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                 body: JSON.stringify({
                     courtId: court.id,
                     status,
-                    partySize: 1
+                    partySize: 1,
+                    lookingForGame: lookingForGame
                 }),
             });
 
@@ -101,15 +103,35 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                         </span>
                         <h2 className="text-2xl font-bold text-white tracking-tight">{court.name}</h2>
                     </div>
-                    <button
-                        onClick={() => {
-                            setMode("DETAILS");
-                            onClose();
-                        }}
-                        className="rounded-full bg-zinc-800 p-1 text-zinc-400 hover:bg-zinc-700 hover:text-white"
-                    >
-                        <X size={20} />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            className="rounded-full bg-zinc-800 p-1 text-zinc-400 hover:bg-zinc-700 hover:text-white"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setMode("DETAILS");
+                                onClose();
+                            }}
+                            className="rounded-full bg-zinc-800 p-1 text-zinc-400 hover:bg-zinc-700 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Status Badge */}
@@ -229,6 +251,27 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                                     <span className="text-sm">{loadingMsg}</span>
                                 </div>
                             )}
+
+                            <div className="mb-6 flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-4">
+                                <div>
+                                    <div className="font-bold text-white">Looking for a Game?</div>
+                                    <div className="text-xs text-zinc-400">Signal that you need a partner</div>
+                                </div>
+                                <button
+                                    onClick={() => setLookingForGame(!lookingForGame)}
+                                    className={clsx(
+                                        "relative h-7 w-12 rounded-full transition-colors duration-200 ease-in-out focus:outline-none",
+                                        lookingForGame ? "bg-tennis-green" : "bg-zinc-700"
+                                    )}
+                                >
+                                    <span
+                                        className={clsx(
+                                            "inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                            lookingForGame ? "translate-x-6" : "translate-x-1"
+                                        )}
+                                    />
+                                </button>
+                            </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <button

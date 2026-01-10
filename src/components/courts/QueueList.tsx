@@ -10,6 +10,7 @@ interface QueueItem {
     avatar_url: string | null;
     status: "PLAYING" | "WAITING";
     party_size: number;
+    looking_for_game: boolean;
     created_at: string;
 }
 
@@ -69,7 +70,15 @@ export function QueueList({ courtId }: { courtId: number }) {
                     )}
                 </div>
                 <div>
-                    <div className="text-sm font-medium text-white">{item.username || "Anonymous"}</div>
+                    <div className="flex items-center space-x-2">
+                        <div className="text-sm font-medium text-white">{item.username || "Anonymous"}</div>
+                        {item.looking_for_game && (
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
+                            </span>
+                        )}
+                    </div>
                     {item.party_size > 1 && (
                         <div className="text-[10px] text-zinc-400"> Party of {item.party_size}</div>
                     )}

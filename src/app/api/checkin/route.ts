@@ -12,13 +12,14 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { courtId, status, partySize } = body;
+        const { courtId, status, partySize, lookingForGame } = body;
 
         // Call the RPC function 
         const { data, error } = await supabase.rpc("check_in", {
             p_court_id: courtId,
             p_status: status,
-            p_party_size: partySize || 1
+            p_party_size: partySize || 1,
+            p_looking_for_game: lookingForGame || false
         });
 
         if (error) throw error;
