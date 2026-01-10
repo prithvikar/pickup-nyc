@@ -1,7 +1,7 @@
 "use client";
 
 import { COURTS, STATUS_COLORS } from "@/data/courts";
-import { Users, MapPin } from "lucide-react";
+import { Users, MapPin, Calendar } from "lucide-react";
 import Link from "next/link";
 
 export default function CourtsPage() {
@@ -11,16 +11,26 @@ export default function CourtsPage() {
 
             <div className="grid gap-4">
                 {COURTS.map((court) => (
-                    <div key={court.id} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:bg-white/10">
+                    <Link
+                        key={court.id}
+                        href={`/courts/${court.id}`}
+                        className="block relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition-all hover:bg-white/10 hover:border-tennis-green/30"
+                    >
                         <div className="flex items-start justify-between">
                             <div>
                                 <div className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">
                                     {court.borough}
                                 </div>
                                 <h2 className="text-xl font-bold text-white mb-2">{court.name}</h2>
-                                <div className="flex items-center text-zinc-400 text-sm">
-                                    <MapPin size={14} className="mr-1" />
-                                    <span>{court.surface}</span>
+                                <div className="flex items-center text-zinc-400 text-sm space-x-3">
+                                    <span className="flex items-center">
+                                        <MapPin size={14} className="mr-1" />
+                                        {court.surface}
+                                    </span>
+                                    <span className="flex items-center">
+                                        <Calendar size={14} className="mr-1" />
+                                        {court.totalCourts} courts
+                                    </span>
                                 </div>
                             </div>
 
@@ -39,15 +49,11 @@ export default function CourtsPage() {
                                 <span>{court.activePlayers} players</span>
                             </div>
 
-                            {/* In a real app, this might link to the map with this court selected */}
-                            <Link
-                                href="/"
-                                className="text-sm font-bold text-tennis-green hover:underline"
-                            >
-                                View on Map &rarr;
-                            </Link>
+                            <span className="text-sm font-bold text-tennis-green">
+                                View Schedule &rarr;
+                            </span>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
         </div>

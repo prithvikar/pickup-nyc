@@ -9,6 +9,7 @@ export interface Court {
     lights: boolean;
     status: CourtStatus;
     activePlayers: number;
+    totalCourts: number;
 }
 
 export const COURTS: Court[] = [
@@ -21,6 +22,7 @@ export const COURTS: Court[] = [
         lights: true,
         status: "OPEN",
         activePlayers: 4,
+        totalCourts: 7,
     },
     {
         id: 2,
@@ -31,6 +33,7 @@ export const COURTS: Court[] = [
         lights: false,
         status: "BUSY",
         activePlayers: 18,
+        totalCourts: 26,
     },
     {
         id: 3,
@@ -41,6 +44,7 @@ export const COURTS: Court[] = [
         lights: false,
         status: "FULL",
         activePlayers: 12,
+        totalCourts: 6,
     },
     {
         id: 4,
@@ -51,6 +55,7 @@ export const COURTS: Court[] = [
         lights: false,
         status: "CLOSED",
         activePlayers: 0,
+        totalCourts: 10,
     },
     {
         id: 5,
@@ -61,6 +66,7 @@ export const COURTS: Court[] = [
         lights: true,
         status: "BUSY",
         activePlayers: 8,
+        totalCourts: 3,
     }
 ];
 

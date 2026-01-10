@@ -13,6 +13,12 @@ interface CourtDrawerProps {
     onClose: () => void;
 }
 
+const formatTime = (hour: number) => {
+    const h = hour % 12 || 12;
+    const ampm = hour < 12 ? "AM" : "PM";
+    return `${h} ${ampm}`;
+};
+
 type DrawerMode = "DETAILS" | "REPORT" | "CHECKIN";
 
 export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
@@ -185,6 +191,40 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                                 </div>
                             </div>
 
+                            <div className="mt-6 rounded-xl border border-white/5 bg-white/5 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-zinc-400 uppercase tracking-widest">Upcoming Availability</h4>
+                                <div className="space-y-2">
+                                    {[0, 1, 2, 3].map((offset) => {
+                                        const date = new Date();
+                                        date.setHours(date.getHours() + offset);
+                                        const hour = date.getHours();
+                                        // Mocking data for now as fetching real data here would require refactoring to async/effect
+                                        // In real app: useSWR or useEffect to fetch /api/schedule
+                                        const total = court.totalCourts;
+                                        const open = Math.floor(Math.random() * total); // Placeholder
+
+                                        return (
+                                            <div key={offset} className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-16 font-mono text-zinc-500">
+                                                        {offset === 0 ? "Now" : formatTime(hour)}
+                                                    </div>
+                                                    <div className="h-2 w-24 rounded-full bg-zinc-800 overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-tennis-green"
+                                                            style={{ width: `${(open / total) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="font-medium text-white">
+                                                    {open} <span className="text-zinc-600">/ {total} Open</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             <div className="mt-6 flex flex-col gap-3">
                                 <button
                                     onClick={() => setMode("CHECKIN")}
@@ -197,6 +237,12 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                                     className="w-full rounded-xl bg-zinc-800 py-3.5 font-bold text-white shadow-lg hover:bg-zinc-700 transition-all border border-white/5"
                                 >
                                     Report Status Update
+                                </button>
+                                <button
+                                    onClick={() => window.location.href = `/courts/${court.id}`}
+                                    className="w-full rounded-xl border border-zinc-700 bg-transparent py-3.5 font-bold text-zinc-300 hover:bg-zinc-800 transition-all"
+                                >
+                                    View Daily Schedule
                                 </button>
                             </div>
                         </div>
