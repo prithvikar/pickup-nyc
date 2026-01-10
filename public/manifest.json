@@ -1,7 +1,7 @@
 {
   "name": "Pickup NYC",
-  "short_name": "PickupNYC",
-  "description": "Find pickup tennis & pickleball games in NYC",
+  "short_name": "Pickup NYC",
+  "description": "Find impromptu tennis matches in NYC.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
@@ -13,9 +13,10 @@
       "type": "image/png"
     },
     {
-      "src": "/icon.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "orientation": "portrait-primary"
 }
