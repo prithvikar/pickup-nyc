@@ -91,10 +91,11 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ease-out translate-y-0">
-            <div className="mx-auto max-w-2xl rounded-t-3xl border-t border-white/10 bg-glass-black/95 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-6 pb-24 md:pb-6 max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div
+                className="pointer-events-auto w-full max-w-lg transform rounded-3xl border border-white/10 bg-glass-black/95 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-6 transition-all animate-in fade-in zoom-in-95 duration-200"
+            >
 
-                <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-zinc-700" />
 
                 <div className="flex items-start justify-between">
                     <div>
