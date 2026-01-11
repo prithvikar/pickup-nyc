@@ -27,16 +27,8 @@ export default function CourtsPage() {
     const startOfDay = setHours(new Date(), 8);
     const endOfDay = setHours(new Date(), 22);
 
-    const toggleExpand = async (courtId: number) => {
-        if (expandedCourtId === courtId) {
-            setExpandedCourtId(null);
-            setSlots([]);
-            return;
-        }
-
-        setExpandedCourtId(courtId);
+    const fetchSlots = async (courtId: number) => {
         setLoadingSlots(true);
-
         try {
             const res = await fetch(`/api/schedule?courtId=${courtId}&startTime=${startOfDay.toISOString()}&endTime=${endOfDay.toISOString()}`);
             if (res.ok) {
@@ -48,6 +40,17 @@ export default function CourtsPage() {
         } finally {
             setLoadingSlots(false);
         }
+    };
+
+    const toggleExpand = async (courtId: number) => {
+        if (expandedCourtId === courtId) {
+            setExpandedCourtId(null);
+            setSlots([]);
+            return;
+        }
+
+        setExpandedCourtId(courtId);
+        fetchSlots(courtId);
     };
 
     const handleSlotClick = async (court: typeof COURTS[0], courtNumber: number, hour: number, currentStatus: "OPEN" | "TAKEN") => {
@@ -81,8 +84,7 @@ export default function CourtsPage() {
             if (!res.ok) throw new Error(data.error || "Failed to update");
 
             // Refetch slots
-            toggleExpand(court.id);
-            toggleExpand(court.id);
+            await fetchSlots(court.id);
 
         } catch (err: any) {
             setError(err.message);
