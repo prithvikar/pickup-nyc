@@ -39,6 +39,11 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
         }
     }, [court]);
 
+    // Nudge modal handler (must be before early return)
+    const handleNudgeTrigger = useCallback(() => {
+        setShowNudgeModal(true);
+    }, []);
+
     if (!court) return null;
 
     // Use local status if available, otherwise fall back to court.status
@@ -113,11 +118,7 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
         }
     };
 
-    // Nudge modal handlers
-    const handleNudgeTrigger = useCallback(() => {
-        setShowNudgeModal(true);
-    }, []);
-
+    // Other nudge handlers (handleNudgeTrigger is defined above before early return)
     const handleNudgeStillWaiting = async () => {
         setShowNudgeModal(false);
         // In a real implementation, this would update `last_confirmed_at` in the database

@@ -23,7 +23,7 @@ interface QueueListProps {
     onNudgeTrigger?: (waitStartTime: string) => void; // Callback when user has been waiting 45+ min
 }
 
-const NUDGE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
+const NUDGE_THRESHOLD_MS = 30 * 1000; // 45 minutes
 
 // Calculate relative time in minutes
 function getWaitDuration(createdAt: string): string {
