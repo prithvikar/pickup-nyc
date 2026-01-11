@@ -52,7 +52,7 @@ export function CourtesyNudgeModal({
     const remainingSeconds = seconds % 60;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 pointer-events-auto">
             <div className="w-full max-w-sm transform rounded-2xl border border-yellow-500/30 bg-zinc-900 p-6 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
                 {/* Header */}
                 <div className="flex items-center space-x-3 mb-4">
