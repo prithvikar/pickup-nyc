@@ -10,6 +10,11 @@ export function getCurrentPosition(): Promise<Coordinates> {
             return;
         }
 
+        const isLocal = typeof window !== 'undefined' &&
+            (window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                window.location.hostname.startsWith('192.168.'));
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 resolve({
@@ -18,6 +23,15 @@ export function getCurrentPosition(): Promise<Coordinates> {
                 });
             },
             (error) => {
+                // If permission denied due to insecure origin (HTTP) on generic local network, fallback for dev testing
+                if (isLocal && (error.code === 1 || error.message.includes("origin does not have permission"))) {
+                    console.warn("Geolocation blocked (insecure origin?). Using McCarren Park mock location for testing.");
+                    resolve({
+                        latitude: 40.7209,
+                        longitude: -73.9552
+                    });
+                    return;
+                }
                 reject(error);
             },
             {
