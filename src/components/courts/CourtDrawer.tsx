@@ -356,6 +356,14 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                                     <span className="text-xs text-zinc-400 mt-1">I'm in line</span>
                                 </button>
                             </div>
+
+                            {/* Waitlist Policy Notice */}
+                            <div className="mt-4 rounded-lg bg-yellow-500/5 border border-yellow-500/10 p-3">
+                                <p className="text-[10px] text-yellow-500/80 leading-relaxed">
+                                    <span className="font-bold">📋 Waitlist Policy:</span> After 45 min of waiting, you'll be asked to confirm your status.
+                                    If no response within 2 min, you'll be automatically removed to keep the queue accurate for everyone.
+                                </p>
+                            </div>
                         </div>
                     )}
                 </div>

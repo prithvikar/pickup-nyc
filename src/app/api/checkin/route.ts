@@ -8,6 +8,7 @@ const isSupabaseConfigured = () => {
 
 // In-memory mock storage for check-ins (persists during server session)
 interface MockCheckIn {
+    id: string;
     courtId: number;
     username: string;
     avatar_url: string | null;
@@ -15,10 +16,13 @@ interface MockCheckIn {
     party_size: number;
     looking_for_game: boolean;
     created_at: string;
+    is_current_user?: boolean;
 }
 
 const mockCheckIns: MockCheckIn[] = [];
+let mockIdCounter = 1;
 
+// POST: Create new check-in
 export async function POST(request: Request) {
     try {
         const body = await request.json();
@@ -35,15 +39,18 @@ export async function POST(request: Request) {
             }
 
             // Add new check-in
-            mockCheckIns.push({
+            const newCheckin: MockCheckIn = {
+                id: `mock-${mockIdCounter++}`,
                 courtId,
                 username: "You",
                 avatar_url: null,
                 status,
                 party_size: partySize || 1,
                 looking_for_game: lookingForGame || false,
-                created_at: new Date().toISOString()
-            });
+                created_at: new Date().toISOString(),
+                is_current_user: true
+            };
+            mockCheckIns.push(newCheckin);
 
             return NextResponse.json({ success: true, message: "Checked in (mock mode)" });
         }
@@ -88,7 +95,9 @@ export async function GET(request: NextRequest) {
 
     // If Supabase isn't configured, return mock data
     if (!isSupabaseConfigured()) {
-        const queue = mockCheckIns.filter(c => c.courtId === parseInt(courtId));
+        const queue = mockCheckIns
+            .filter(c => c.courtId === parseInt(courtId))
+            .map(c => ({ ...c, is_current_user: c.username === "You" }));
         return NextResponse.json(queue);
     }
 
@@ -103,6 +112,87 @@ export async function GET(request: NextRequest) {
         if (error) throw error;
 
         return NextResponse.json(data || []);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+// PATCH: Update check-in status (WAITING -> PLAYING)
+export async function PATCH(request: Request) {
+    try {
+        const body = await request.json();
+        const { courtId, status } = body;
+
+        if (!isSupabaseConfigured()) {
+            console.log(`[MOCK] Status update: Court ${courtId} -> ${status}`);
+
+            const checkin = mockCheckIns.find(c => c.username === "You" && c.courtId === courtId);
+            if (checkin) {
+                checkin.status = status;
+            }
+            return NextResponse.json({ success: true, message: "Status updated (mock mode)" });
+        }
+
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabase = await createClient();
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Update user's check-in status
+        const { error } = await supabase
+            .from("checkins")
+            .update({ status })
+            .eq("user_id", user.id)
+            .eq("court_id", courtId);
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+// DELETE: Leave queue (remove check-in)
+export async function DELETE(request: NextRequest) {
+    const searchParams = request.nextUrl.searchParams;
+    const courtId = searchParams.get("courtId");
+
+    if (!courtId) {
+        return NextResponse.json({ error: "Missing courtId" }, { status: 400 });
+    }
+
+    if (!isSupabaseConfigured()) {
+        console.log(`[MOCK] Leave queue: Court ${courtId}`);
+
+        const index = mockCheckIns.findIndex(c => c.username === "You" && c.courtId === parseInt(courtId));
+        if (index >= 0) {
+            mockCheckIns.splice(index, 1);
+        }
+        return NextResponse.json({ success: true, message: "Left queue (mock mode)" });
+    }
+
+    try {
+        const { createClient } = await import("@/lib/supabase/server");
+        const supabase = await createClient();
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { error } = await supabase
+            .from("checkins")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("court_id", parseInt(courtId));
+
+        if (error) throw error;
+
+        return NextResponse.json({ success: true });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
