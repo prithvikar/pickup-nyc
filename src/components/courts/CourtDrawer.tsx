@@ -112,9 +112,9 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none pb-24 md:pb-4">
             <div
-                className="pointer-events-auto w-full max-w-lg transform rounded-3xl border border-white/10 bg-glass-black/95 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-6 transition-all animate-in fade-in zoom-in-95 duration-200"
+                className="pointer-events-auto flex flex-col w-full max-w-lg max-h-[80vh] transform rounded-3xl border border-white/10 bg-glass-black/95 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] p-6 transition-all animate-in fade-in zoom-in-95 duration-200"
             >
 
 
@@ -176,7 +176,7 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="mt-6">
+                <div className="mt-6 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
                     {successMsg && (
                         <div className="mb-4 rounded-lg bg-green-500/10 p-3 text-sm text-green-400 border border-green-500/20 animate-in fade-in slide-in-from-top-2">
                             {successMsg}
