@@ -3,9 +3,10 @@
 import { Court, STATUS_COLORS, CourtStatus } from "@/data/courts";
 import { X, Users, Locate, Loader2, Music } from "lucide-react";
 import { clsx } from "clsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getCurrentPosition } from "@/lib/geolocation";
 import { QueueList } from "./QueueList";
+import { CourtesyNudgeModal } from "./CourtesyNudgeModal";
 import { createClient } from "@/lib/supabase/client";
 
 interface CourtDrawerProps {
@@ -29,6 +30,7 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
     const [currentStatus, setCurrentStatus] = useState<CourtStatus | null>(null);
     const [queueRefresh, setQueueRefresh] = useState(0);
+    const [showNudgeModal, setShowNudgeModal] = useState(false);
 
     // Reset status when court changes
     useEffect(() => {
@@ -108,6 +110,53 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
             setErrorMsg(err.message);
         } finally {
             setLoadingMsg(null);
+        }
+    };
+
+    // Nudge modal handlers
+    const handleNudgeTrigger = useCallback(() => {
+        setShowNudgeModal(true);
+    }, []);
+
+    const handleNudgeStillWaiting = async () => {
+        setShowNudgeModal(false);
+        // In a real implementation, this would update `last_confirmed_at` in the database
+        setQueueRefresh(prev => prev + 1);
+    };
+
+    const handleNudgePlayingNow = async () => {
+        setShowNudgeModal(false);
+        try {
+            await fetch("/api/checkin", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ courtId: court.id, status: "PLAYING" }),
+            });
+            setQueueRefresh(prev => prev + 1);
+        } catch (err) {
+            console.error("Failed to update status", err);
+        }
+    };
+
+    const handleNudgeLeaveQueue = async () => {
+        setShowNudgeModal(false);
+        try {
+            await fetch(`/api/checkin?courtId=${court.id}`, { method: "DELETE" });
+            setQueueRefresh(prev => prev + 1);
+        } catch (err) {
+            console.error("Failed to leave queue", err);
+        }
+    };
+
+    const handleNudgeAutoRemove = async () => {
+        setShowNudgeModal(false);
+        try {
+            await fetch(`/api/checkin?courtId=${court.id}`, { method: "DELETE" });
+            setQueueRefresh(prev => prev + 1);
+            setSuccessMsg("You were removed from the queue due to inactivity.");
+            setTimeout(() => setSuccessMsg(null), 5000);
+        } catch (err) {
+            console.error("Failed to auto-remove", err);
         }
     };
 
@@ -191,7 +240,12 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
 
                     {mode === "DETAILS" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4">
-                            <QueueList courtId={court.id} refreshTrigger={queueRefresh} />
+                            <QueueList
+                                courtId={court.id}
+                                refreshTrigger={queueRefresh}
+                                onNudgeTrigger={handleNudgeTrigger}
+                                onStatusChange={() => setQueueRefresh(prev => prev + 1)}
+                            />
 
                             <div className="mt-6 grid grid-cols-2 gap-3">
                                 <div className="rounded-xl border border-white/5 bg-white/5 p-3">
@@ -368,6 +422,16 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                     )}
                 </div>
             </div>
+
+            {/* Courtesy Nudge Modal */}
+            <CourtesyNudgeModal
+                isOpen={showNudgeModal}
+                courtId={court.id}
+                onStillWaiting={handleNudgeStillWaiting}
+                onPlayingNow={handleNudgePlayingNow}
+                onLeaveQueue={handleNudgeLeaveQueue}
+                onAutoRemove={handleNudgeAutoRemove}
+            />
         </div>
     );
 }

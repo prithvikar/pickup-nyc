@@ -20,7 +20,10 @@ interface QueueListProps {
     refreshTrigger?: number;
     currentUserId?: string;
     onStatusChange?: () => void;
+    onNudgeTrigger?: (waitStartTime: string) => void; // Callback when user has been waiting 45+ min
 }
+
+const NUDGE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
 
 // Calculate relative time in minutes
 function getWaitDuration(createdAt: string): string {
@@ -37,10 +40,19 @@ function getWaitDuration(createdAt: string): string {
     return `${hours}h ${mins}m`;
 }
 
-export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChange }: QueueListProps) {
+// Check if wait time exceeds threshold
+function shouldTriggerNudge(createdAt: string): boolean {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now.getTime() - created.getTime();
+    return diffMs >= NUDGE_THRESHOLD_MS;
+}
+
+export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChange, onNudgeTrigger }: QueueListProps) {
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [nudgeTriggered, setNudgeTriggered] = useState(false);
 
     const fetchQueue = useCallback(async () => {
         setLoading(true);
@@ -63,6 +75,28 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
         return () => clearInterval(interval);
     }, [fetchQueue, refreshTrigger]);
 
+    // Check for nudge trigger (current user waiting 45+ min)
+    useEffect(() => {
+        const currentUserWaiting = queue.find(
+            p => (p.is_current_user || p.username === "You") && p.status === "WAITING"
+        );
+
+        if (currentUserWaiting && !nudgeTriggered && shouldTriggerNudge(currentUserWaiting.created_at)) {
+            setNudgeTriggered(true);
+            onNudgeTrigger?.(currentUserWaiting.created_at);
+        }
+    }, [queue, nudgeTriggered, onNudgeTrigger]);
+
+    // Reset nudge state when queue changes significantly (user action taken)
+    useEffect(() => {
+        const currentUserWaiting = queue.find(
+            p => (p.is_current_user || p.username === "You") && p.status === "WAITING"
+        );
+        if (!currentUserWaiting) {
+            setNudgeTriggered(false);
+        }
+    }, [queue]);
+
     const handleStatusChange = async (newStatus: "PLAYING" | "LEAVE") => {
         setActionLoading(newStatus);
         try {
@@ -75,6 +109,7 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
                     body: JSON.stringify({ courtId, status: newStatus }),
                 });
             }
+            setNudgeTriggered(false); // Reset nudge on any action
             await fetchQueue();
             onStatusChange?.();
         } catch (err) {
@@ -111,6 +146,7 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
     const renderWaitingItem = (item: QueueItem, index: number) => {
         const isCurrentUser = item.is_current_user || item.username === "You";
         const position = index + 1;
+        const isLongWait = shouldTriggerNudge(item.created_at);
 
         return (
             <div
@@ -118,14 +154,21 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
                 className={clsx(
                     "rounded-lg p-3 transition-all",
                     isCurrentUser
-                        ? "bg-blue-500/10 border border-blue-500/30"
+                        ? isLongWait
+                            ? "bg-yellow-500/10 border border-yellow-500/30"
+                            : "bg-blue-500/10 border border-blue-500/30"
                         : "bg-white/5"
                 )}
             >
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         {/* Position Badge */}
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-500/20 text-xs font-bold text-blue-400">
+                        <div className={clsx(
+                            "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
+                            isLongWait && isCurrentUser
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-blue-500/20 text-blue-400"
+                        )}>
                             #{position}
                         </div>
 
@@ -144,7 +187,10 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
                             <div className="flex items-center space-x-2">
                                 <div className="text-sm font-medium text-white">
                                     {item.username || "Anonymous"}
-                                    {isCurrentUser && <span className="ml-1 text-blue-400">(You)</span>}
+                                    {isCurrentUser && <span className={clsx(
+                                        "ml-1",
+                                        isLongWait ? "text-yellow-400" : "text-blue-400"
+                                    )}>(You)</span>}
                                 </div>
                                 {item.looking_for_game && (
                                     <span className="relative flex h-2 w-2">
@@ -160,7 +206,10 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
                     </div>
 
                     {/* Wait Duration */}
-                    <div className="flex items-center space-x-1 text-[10px] text-zinc-500">
+                    <div className={clsx(
+                        "flex items-center space-x-1 text-[10px]",
+                        isLongWait && isCurrentUser ? "text-yellow-500" : "text-zinc-500"
+                    )}>
                         <Clock size={10} />
                         <span>{getWaitDuration(item.created_at)}</span>
                     </div>
