@@ -56,6 +56,28 @@ export const COURTS: Court[] = [
         status: "BUSY",
         activePlayers: 8,
         totalCourts: 3,
+    },
+    {
+        id: 6,
+        name: "Brian Watkins Tennis Center",
+        borough: "Manhattan",
+        location: [40.7161, -73.9782], // Near Williamsburg Bridge
+        surface: "Hard",
+        lights: true,
+        status: "OPEN",
+        activePlayers: 6,
+        totalCourts: 12,
+    },
+    {
+        id: 7,
+        name: "Cooper Park",
+        borough: "Brooklyn",
+        location: [40.7159, -73.9366],
+        surface: "Hard",
+        lights: true,
+        status: "OPEN",
+        activePlayers: 2,
+        totalCourts: 2,
     }
 ];
 
