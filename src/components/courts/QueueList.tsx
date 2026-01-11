@@ -23,7 +23,7 @@ interface QueueListProps {
     onNudgeTrigger?: (waitStartTime: string) => void; // Callback when user has been waiting 45+ min
 }
 
-const NUDGE_THRESHOLD_MS = 30 * 1000; // 45 minutes
+const NUDGE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
 
 // Calculate relative time in minutes
 function getWaitDuration(createdAt: string): string {
@@ -46,6 +46,16 @@ function shouldTriggerNudge(createdAt: string): boolean {
     const created = new Date(createdAt);
     const diffMs = now.getTime() - created.getTime();
     return diffMs >= NUDGE_THRESHOLD_MS;
+}
+
+const PLAYING_EXPIRY_MS = 60 * 60 * 1000; // 1 hour for PLAYING auto-expiry
+
+// Check if playing time exceeds 1 hour (should be auto-removed)
+function isPlayingExpired(createdAt: string): boolean {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now.getTime() - created.getTime();
+    return diffMs >= PLAYING_EXPIRY_MS;
 }
 
 export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChange, onNudgeTrigger }: QueueListProps) {
@@ -127,7 +137,8 @@ export function QueueList({ courtId, refreshTrigger, currentUserId, onStatusChan
         );
     }
 
-    const playing = queue.filter(p => p.status === "PLAYING");
+    // Filter out expired PLAYING entries (on court for more than 1 hour)
+    const playing = queue.filter(p => p.status === "PLAYING" && !isPlayingExpired(p.created_at));
     const waiting = queue.filter(p => p.status === "WAITING");
 
     // Check if current user is in the waiting list
