@@ -1,9 +1,9 @@
 "use client";
 
-import { Court, STATUS_COLORS } from "@/data/courts";
+import { Court, STATUS_COLORS, CourtStatus } from "@/data/courts";
 import { X, Users, Locate, Loader2, Music } from "lucide-react";
 import { clsx } from "clsx";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getCurrentPosition } from "@/lib/geolocation";
 import { QueueList } from "./QueueList";
 import { createClient } from "@/lib/supabase/client";
@@ -27,8 +27,20 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
     const [loadingMsg, setLoadingMsg] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const [currentStatus, setCurrentStatus] = useState<CourtStatus | null>(null);
+    const [queueRefresh, setQueueRefresh] = useState(0);
+
+    // Reset status when court changes
+    useEffect(() => {
+        if (court) {
+            setCurrentStatus(court.status);
+        }
+    }, [court]);
 
     if (!court) return null;
+
+    // Use local status if available, otherwise fall back to court.status
+    const displayStatus = currentStatus || court.status;
 
     const handleReport = async (status: string) => {
         setLoadingMsg("Verifying location...");
@@ -55,6 +67,8 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "Failed to submit report");
 
+            // Update local status immediately
+            setCurrentStatus(status as CourtStatus);
             setSuccessMsg("Status updated! Thanks for contributing.");
             setTimeout(() => {
                 setMode("DETAILS");
@@ -88,6 +102,7 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
 
             setSuccessMsg("You're checked in!");
             setMode("DETAILS");
+            setQueueRefresh(prev => prev + 1); // Trigger queue refresh
             setTimeout(() => setSuccessMsg(null), 3000);
         } catch (err: any) {
             setErrorMsg(err.message);
@@ -144,14 +159,14 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                 {/* Status Badge */}
                 <div className="mt-4 flex items-center space-x-3">
                     <div
-                        className="flex items-center space-x-2 rounded-full px-3 py-1 text-sm font-bold text-black shadow-lg"
-                        style={{ backgroundColor: STATUS_COLORS[court.status] }}
+                        className="flex items-center space-x-2 rounded-full px-3 py-1 text-sm font-bold text-black shadow-lg transition-all"
+                        style={{ backgroundColor: STATUS_COLORS[displayStatus] }}
                     >
                         <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-black opacity-75"></span>
                             <span className="relative inline-flex h-2 w-2 rounded-full bg-black"></span>
                         </span>
-                        <span>{court.status}</span>
+                        <span>{displayStatus}</span>
                     </div>
 
                     <div className="flex items-center space-x-1 text-zinc-400 text-sm">
@@ -176,7 +191,7 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
 
                     {mode === "DETAILS" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4">
-                            <QueueList courtId={court.id} />
+                            <QueueList courtId={court.id} refreshTrigger={queueRefresh} />
 
                             <div className="mt-6 grid grid-cols-2 gap-3">
                                 <div className="rounded-xl border border-white/5 bg-white/5 p-3">
@@ -313,8 +328,8 @@ export function CourtDrawer({ court, onClose }: CourtDrawerProps) {
                                 >
                                     <span
                                         className={clsx(
-                                            "inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                                            lookingForGame ? "translate-x-6" : "translate-x-1"
+                                            "absolute left-1 top-1 h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out",
+                                            lookingForGame ? "translate-x-5" : "translate-x-0"
                                         )}
                                     />
                                 </button>

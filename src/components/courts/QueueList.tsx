@@ -1,13 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loader2, User } from "lucide-react";
-
-// Check if Supabase is configured
-const isSupabaseConfigured = () => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    return url && !url.includes('your-project-ref') && url.startsWith('https://');
-};
 
 interface QueueItem {
     username: string;
@@ -18,43 +12,38 @@ interface QueueItem {
     created_at: string;
 }
 
-export function QueueList({ courtId }: { courtId: number }) {
+interface QueueListProps {
+    courtId: number;
+    refreshTrigger?: number;
+}
+
+export function QueueList({ courtId, refreshTrigger }: QueueListProps) {
     const [queue, setQueue] = useState<QueueItem[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchQueue = async () => {
-            setLoading(true);
-
-            // Skip Supabase call if not configured
-            if (!isSupabaseConfigured()) {
-                setQueue([]);
-                setLoading(false);
-                return;
+    const fetchQueue = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Use API endpoint that works in both mock and real mode
+            const res = await fetch(`/api/checkin?courtId=${courtId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setQueue(Array.isArray(data) ? data : []);
             }
-
-            try {
-                const { createClient } = await import("@/lib/supabase/client");
-                const supabase = createClient();
-                const { data, error } = await supabase.rpc("get_court_queue", { p_court_id: courtId });
-
-                if (!error && data) {
-                    setQueue(data);
-                }
-            } catch (err) {
-                console.warn("QueueList: Failed to fetch queue", err);
-            }
+        } catch (err) {
+            console.warn("QueueList: Failed to fetch queue", err);
+        } finally {
             setLoading(false);
-        };
-
-        fetchQueue();
-
-        // Simple polling for now (only if configured)
-        if (isSupabaseConfigured()) {
-            const interval = setInterval(fetchQueue, 15000);
-            return () => clearInterval(interval);
         }
     }, [courtId]);
+
+    useEffect(() => {
+        fetchQueue();
+
+        // Simple polling
+        const interval = setInterval(fetchQueue, 10000);
+        return () => clearInterval(interval);
+    }, [fetchQueue, refreshTrigger]);
 
     if (loading && queue.length === 0) {
         return (
